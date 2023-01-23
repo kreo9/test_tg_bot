@@ -6,6 +6,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
+	"github.com/kreo9/test_tg_bot/internal/service/product"
 )
 
 func main() {
@@ -16,17 +17,15 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
-
-	//bot.Debug = true
-
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	u := tgbotapi.UpdateConfig{
 		Timeout: 60,
 	}
 
-	updates := bot.GetUpdatesChan(u)
+	productService := product.NewService()
 
+	updates := bot.GetUpdatesChan(u)
 	for update := range updates {
 		if update.Message == nil {
 			continue
@@ -36,6 +35,8 @@ func main() {
 		switch update.Message.Command() {
 		case "help":
 			helpCommand(bot, update.Message)
+		case "list":
+			listCommand(bot, update.Message, productService)
 		default:
 			defaultBehavior(bot, update.Message)
 		}
@@ -44,7 +45,21 @@ func main() {
 }
 
 func helpCommand(bot *tgbotapi.BotAPI, inputMsg *tgbotapi.Message) {
-	msg := tgbotapi.NewMessage(inputMsg.Chat.ID, "/help - help")
+	msg := tgbotapi.NewMessage(inputMsg.Chat.ID,
+		"/help - help\n"+
+			"/list - list products",
+	)
+	bot.Send(msg)
+}
+
+func listCommand(bot *tgbotapi.BotAPI, inputMsg *tgbotapi.Message, productService *product.Service) {
+	outputText := "All products: \n\n"
+	products := productService.List()
+	for _, p := range products {
+		outputText += p.Title
+		outputText += "\n"
+	}
+	msg := tgbotapi.NewMessage(inputMsg.Chat.ID, outputText)
 	bot.Send(msg)
 }
 
