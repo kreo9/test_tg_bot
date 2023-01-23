@@ -10,10 +10,7 @@ import (
 
 func main() {
 
-	err := godotenv.Load("../../.env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	godotenv.Load("../../.env")
 
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TOKEN"))
 	if err != nil {
@@ -31,14 +28,28 @@ func main() {
 	updates := bot.GetUpdatesChan(u)
 
 	for update := range updates {
-		if update.Message != nil { // If we got a message
-			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-			//msg := tgbotapi.NewMessage(update.Message.Chat.ID, "You wrote: "+update.Message.Text)
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Я тупой бот, который только и умеет здороваться. Привет "+update.Message.From.UserName+".")
-			msg.ReplyToMessageID = update.Message.MessageID
-
-			bot.Send(msg)
+		if update.Message == nil {
+			continue
 		}
+		// Получили сообщение
+		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+		switch update.Message.Command() {
+		case "help":
+			helpCommand(bot, update.Message)
+		default:
+			defaultBehavior(bot, update.Message)
+		}
+
 	}
+}
+
+func helpCommand(bot *tgbotapi.BotAPI, inputMsg *tgbotapi.Message) {
+	msg := tgbotapi.NewMessage(inputMsg.Chat.ID, "/help - help")
+	bot.Send(msg)
+}
+
+func defaultBehavior(bot *tgbotapi.BotAPI, inputMsg *tgbotapi.Message) {
+	msg := tgbotapi.NewMessage(inputMsg.Chat.ID, "Я тупой бот, который только и умеет здороваться. Привет "+inputMsg.From.UserName+".")
+	msg.ReplyToMessageID = inputMsg.MessageID
+	bot.Send(msg)
 }
