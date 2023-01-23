@@ -6,6 +6,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
+	"github.com/kreo9/test_tg_bot/internal/app/commands"
 	"github.com/kreo9/test_tg_bot/internal/service/product"
 )
 
@@ -25,6 +26,7 @@ func main() {
 
 	productService := product.NewService()
 
+	commander := commands.NewCommandRouter(bot, productService)
 	updates := bot.GetUpdatesChan(u)
 	for update := range updates {
 		if update.Message == nil {
@@ -34,37 +36,12 @@ func main() {
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 		switch update.Message.Command() {
 		case "help":
-			helpCommand(bot, update.Message)
+			commander.Help(update.Message)
 		case "list":
-			listCommand(bot, update.Message, productService)
+			commander.List(update.Message)
 		default:
-			defaultBehavior(bot, update.Message)
+			commander.Default(update.Message)
 		}
 
 	}
-}
-
-func helpCommand(bot *tgbotapi.BotAPI, inputMsg *tgbotapi.Message) {
-	msg := tgbotapi.NewMessage(inputMsg.Chat.ID,
-		"/help - help\n"+
-			"/list - list products",
-	)
-	bot.Send(msg)
-}
-
-func listCommand(bot *tgbotapi.BotAPI, inputMsg *tgbotapi.Message, productService *product.Service) {
-	outputText := "All products: \n\n"
-	products := productService.List()
-	for _, p := range products {
-		outputText += p.Title
-		outputText += "\n"
-	}
-	msg := tgbotapi.NewMessage(inputMsg.Chat.ID, outputText)
-	bot.Send(msg)
-}
-
-func defaultBehavior(bot *tgbotapi.BotAPI, inputMsg *tgbotapi.Message) {
-	msg := tgbotapi.NewMessage(inputMsg.Chat.ID, "Я тупой бот, который только и умеет здороваться. Привет "+inputMsg.From.UserName+".")
-	msg.ReplyToMessageID = inputMsg.MessageID
-	bot.Send(msg)
 }
