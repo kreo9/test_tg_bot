@@ -29,19 +29,6 @@ func main() {
 	commander := commands.NewCommandRouter(bot, productService)
 	updates := bot.GetUpdatesChan(u)
 	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
-		// Получили сообщение
-		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-		switch update.Message.Command() {
-		case "help":
-			commander.Help(update.Message)
-		case "list":
-			commander.List(update.Message)
-		default:
-			commander.Default(update.Message)
-		}
-
+		commander.HandleUpdate(update)
 	}
 }

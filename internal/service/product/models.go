@@ -1,11 +1,11 @@
 package product
 
 var allProducts = []Product{
-	{Title: "one"},
-	{Title: "two"},
-	{Title: "three"},
-	{Title: "for"},
-	{Title: "five"},
+	{Title: "Крем"},
+	{Title: "Соль для ванной"},
+	{Title: "Мыло"},
+	{Title: "Шампунь"},
+	{Title: "Умывалка"},
 }
 
 type Product struct {
